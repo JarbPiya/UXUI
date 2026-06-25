@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ceremony Coffee OS Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --color-bg: #dbcdd6;
+        --color-surface: #ead7d1;
+        --color-surface-strong: #f0dfda;
+        --color-accent: #dd99bb;
+        --color-secondary: #7b506f;
+        --color-text: #1f1a38;
+        --color-success: #4d8c57;
+        --color-warning: #d99b3d;
+        --color-danger: #c25a5a;
+        --color-border: rgba(31, 26, 56, 0.08);
+        --color-muted: rgba(31, 26, 56, 0.58);
+        --color-faint: rgba(31, 26, 56, 0.05);
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-12: 48px;
+        --space-16: 64px;
+        --radius-sm: 10px;
+        --radius-md: 16px;
+        --radius-lg: 24px;
+        --radius-pill: 999px;
+        --shadow-soft: 0 18px 55px rgba(31, 26, 56, 0.08);
+        --shadow-line: 0 1px 0 rgba(31, 26, 56, 0.05);
+        --sidebar: 284px;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0;
+      }
+      button, input, select, textarea { font: inherit; }
+      button { cursor: pointer; }
+      a { color: inherit; text-decoration: none; }
+      ::selection { background: rgba(221, 153, 187, 0.55); }
+
+      .app { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100vh; }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: var(--space-6) var(--space-4);
+        border-right: 1px solid var(--color-border);
+        background: rgba(234, 215, 209, 0.38);
+      }
+      .brand { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-2) var(--space-6); }
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--color-text);
+        color: var(--color-surface);
+        font-weight: 800;
+      }
+      .brand-title { display: block; font-size: 15px; font-weight: 800; }
+      .brand-meta { display: block; margin-top: 2px; color: var(--color-muted); font-size: 12px; font-weight: 600; }
+      .nav-group { margin-top: var(--space-4); }
+      .nav-label { padding: 0 var(--space-2) var(--space-2); color: var(--color-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+      .nav-link {
+        width: 100%;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        padding: 0 10px;
+        color: var(--color-muted);
+        font-size: 14px;
+        font-weight: 700;
+        text-align: left;
+      }
+      .nav-link:hover, .nav-link.is-active { background: var(--color-faint); color: var(--color-text); }
+      .nav-icon { width: 18px; height: 18px; display: inline-grid; place-items: center; }
+      .main { min-width: 0; }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+        padding: 0 var(--space-8);
+        border-bottom: 1px solid var(--color-border);
+        background: rgba(219, 205, 198, 0.84);
+        backdrop-filter: blur(18px);
+      }
+      .breadcrumb { color: var(--color-muted); font-size: 13px; font-weight: 700; }
+      .top-actions { display: flex; align-items: center; gap: var(--space-2); }
+      .page { padding: var(--space-8); }
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: var(--space-6);
+        margin-bottom: var(--space-8);
+      }
+      .eyebrow { margin: 0 0 var(--space-2); color: var(--color-secondary); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+      .display { margin: 0; font-size: clamp(38px, 5vw, 64px); line-height: 1.02; font-weight: 800; letter-spacing: 0; }
+      .lead { max-width: 760px; margin: var(--space-4) 0 0; color: var(--color-muted); font-size: 16px; line-height: 1.7; font-weight: 500; }
+      .section { margin-top: var(--space-12); scroll-margin-top: 96px; }
+      .section-head { display: flex; align-items: end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+      .section-title { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 800; }
+      .section-copy { margin: var(--space-2) 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+      .grid { display: grid; gap: var(--space-4); }
+      .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .dashboard-grid { grid-template-columns: minmax(0, 1.35fr) minmax(320px, .75fr); align-items: start; }
+      .pos-grid { grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
+      .card {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: rgba(234, 215, 209, 0.72);
+        box-shadow: var(--shadow-line);
+      }
+      .card.pad { padding: var(--space-5, 20px); }
+      .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 18px 20px 8px; }
+      .card-title { margin: 0; font-size: 18px; font-weight: 800; }
+      .muted { color: var(--color-muted); }
+      .small { font-size: 12px; line-height: 1.5; }
+      .body { font-size: 14px; line-height: 1.6; }
+      .body-lg { font-size: 16px; line-height: 1.7; }
+      .stack { display: grid; gap: var(--space-3); }
+      .cluster { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+
+      .btn {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        border: 1px solid transparent;
+        border-radius: var(--radius-md);
+        padding: 0 var(--space-4);
+        background: var(--color-accent);
+        color: var(--color-text);
+        font-size: 14px;
+        font-weight: 800;
+        transition: transform .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+      }
+      .btn:hover { transform: translateY(-1px); background: #e4a8c5; }
+      .btn:active { transform: translateY(0); }
+      .btn:focus-visible, .field:focus, select:focus, textarea:focus { outline: 2px solid rgba(123, 80, 111, .26); outline-offset: 2px; }
+      .btn.secondary { background: var(--color-secondary); color: var(--color-surface); }
+      .btn.secondary:hover { background: #6f4864; }
+      .btn.ghost { background: transparent; border-color: var(--color-border); color: var(--color-text); }
+      .btn.ghost:hover { background: var(--color-faint); }
+      .btn.outline { background: transparent; border-color: rgba(123, 80, 111, .36); color: var(--color-secondary); }
+      .btn.danger { background: var(--color-danger); color: #fff; }
+      .btn[disabled] { cursor: not-allowed; opacity: .45; transform: none; }
+      .btn.icon { width: 44px; padding: 0; border-radius: var(--radius-sm); }
+      .btn.fab { width: 56px; height: 56px; padding: 0; border-radius: var(--radius-pill); box-shadow: var(--shadow-soft); }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(31, 26, 56, .24);
+        border-top-color: var(--color-text);
+        border-radius: 50%;
+        animation: spin .8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .field, select, textarea {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: rgba(240, 223, 218, .62);
+        color: var(--color-text);
+        padding: 0 14px;
+        outline: 0;
+      }
+      textarea { min-height: 112px; padding: 12px 14px; resize: vertical; }
+      label { display: grid; gap: var(--space-2); color: var(--color-muted); font-size: 12px; font-weight: 800; }
+      .search { position: relative; }
+      .search .field { padding-left: 40px; }
+      .search-icon { position: absolute; left: 14px; top: 12px; color: var(--color-muted); }
+      .toggle { width: 44px; height: 24px; appearance: none; border-radius: var(--radius-pill); background: rgba(31, 26, 56, .13); position: relative; }
+      .toggle:checked { background: var(--color-secondary); }
+      .toggle:before { content: ""; position: absolute; width: 20px; height: 20px; top: 2px; left: 2px; border-radius: 50%; background: white; transition: transform .18s ease; }
+      .toggle:checked:before { transform: translateX(20px); }
+      input[type="checkbox"], input[type="radio"] { accent-color: var(--color-secondary); width: 18px; height: 18px; }
+      .checkline { display: flex; align-items: center; gap: var(--space-2); color: var(--color-text); font-size: 14px; font-weight: 700; }
+      .otp { display: grid; grid-template-columns: repeat(6, 44px); gap: var(--space-2); }
+      .otp input { text-align: center; font-weight: 800; padding: 0; }
+      .tag-input { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; min-height: 44px; padding: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: rgba(240, 223, 218, .62); }
+
+      .chip, .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        border-radius: var(--radius-pill);
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 800;
+        background: var(--color-faint);
+      }
+      .success { color: var(--color-success); background: rgba(77, 140, 87, .12); }
+      .warning { color: var(--color-warning); background: rgba(217, 155, 61, .14); }
+      .danger { color: var(--color-danger); background: rgba(194, 90, 90, .12); }
+      .accent { background: rgba(221, 153, 187, .38); }
+      .alert, .toast {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface-strong);
+        padding: 14px 16px;
+        box-shadow: var(--shadow-soft);
+      }
+      .dialog {
+        max-width: 420px;
+        border-radius: var(--radius-lg);
+        background: var(--color-surface-strong);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-soft);
+      }
+      .empty-state { display: grid; place-items: center; min-height: 220px; text-align: center; padding: var(--space-8); }
+      .skeleton { height: 12px; border-radius: var(--radius-pill); background: linear-gradient(90deg, rgba(31,26,56,.06), rgba(31,26,56,.12), rgba(31,26,56,.06)); background-size: 220% 100%; animation: shimmer 1.4s infinite; }
+      @keyframes shimmer { to { background-position: -220% 0; } }
+      .progress { height: 8px; overflow: hidden; border-radius: var(--radius-pill); background: rgba(31, 26, 56, .08); }
+      .progress span { display: block; height: 100%; border-radius: inherit; background: var(--color-secondary); }
+      .tooltip { display: inline-flex; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--color-text); color: var(--color-surface); font-size: 12px; font-weight: 700; }
+
+      .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--color-border); overflow-x: auto; }
+      .tab { border: 0; background: transparent; padding: 12px 10px; color: var(--color-muted); font-weight: 800; }
+      .tab.is-active { color: var(--color-text); box-shadow: inset 0 -2px 0 var(--color-secondary); }
+      .drawer { min-height: 240px; border-left: 1px solid var(--color-border); padding: var(--space-4); background: rgba(240, 223, 218, .56); }
+      .bottom-sheet { border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: var(--space-5, 20px); background: var(--color-surface-strong); }
+      .context-menu { width: 220px; padding: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-strong); box-shadow: var(--shadow-soft); }
+      .menu-item { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; }
+      .menu-item:hover { background: var(--color-faint); }
+      .pagination { display: flex; align-items: center; gap: 6px; }
+
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: 14px 20px; border-top: 1px solid var(--color-border); text-align: left; font-size: 13px; }
+      th { color: var(--color-muted); font-size: 12px; font-weight: 800; }
+      .table-wrap { overflow-x: auto; }
+      .kpi-value { margin-top: 12px; font-size: 30px; line-height: 1; font-weight: 800; }
+      .avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-pill); background: rgba(221, 153, 187, .45); font-size: 12px; font-weight: 800; }
+      .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 13px 0; border-top: 1px solid var(--color-border); }
+      .media { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+      .media strong { display: block; font-size: 14px; }
+      .media span { display: block; margin-top: 2px; color: var(--color-muted); font-size: 12px; }
+      .chart { height: 280px; display: flex; align-items: end; gap: 12px; padding: 20px; }
+      .bar { flex: 1; min-height: 34px; border-radius: 999px 999px 8px 8px; background: linear-gradient(180deg, var(--color-secondary), rgba(123, 80, 111, .25)); }
+      .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .product-card { min-height: 142px; padding: var(--space-4); display: flex; flex-direction: column; justify-content: space-between; }
+      .product-thumb { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 14px; background: rgba(123, 80, 111, .14); font-weight: 800; }
+      .token-card { padding: var(--space-4); }
+      .swatch { height: 56px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: var(--space-3); }
+      .code {
+        overflow-x: auto;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: rgba(31, 26, 56, .06);
+        padding: var(--space-4);
+        color: var(--color-text);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      @media (max-width: 1180px) {
+        .app { grid-template-columns: 1fr; }
+        .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--color-border); }
+        .sidebar nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+        .cols-4, .dashboard-grid, .pos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 760px) {
+        .topbar { padding: 0 var(--space-4); }
+        .page { padding: var(--space-5, 20px) var(--space-4) var(--space-8); }
+        .hero, .section-head, .cols-2, .cols-3, .cols-4, .dashboard-grid, .pos-grid, .product-grid { grid-template-columns: 1fr; }
+        .sidebar nav { grid-template-columns: 1fr; }
+        .top-actions .btn:not(.icon) { display: none; }
+        th:nth-child(3), td:nth-child(3) { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" aria-label="Design system navigation">
+        <div class="brand">
+          <div class="brand-mark">C</div>
+          <div>
+            <span class="brand-title">Ceremony OS</span>
+            <span class="brand-meta">Design system v1.0</span>
+          </div>
+        </div>
+        <nav>
+          <div class="nav-group">
+            <div class="nav-label">Foundation</div>
+            <a class="nav-link is-active" href="#overview"><span class="nav-icon">⌘</span>Overview</a>
+            <a class="nav-link" href="#tokens"><span class="nav-icon">◐</span>Tokens</a>
+            <a class="nav-link" href="#typography"><span class="nav-icon">T</span>Typography</a>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Components</div>
+            <a class="nav-link" href="#buttons"><span class="nav-icon">□</span>Buttons</a>
+            <a class="nav-link" href="#inputs"><span class="nav-icon">⌕</span>Inputs</a>
+            <a class="nav-link" href="#feedback"><span class="nav-icon">◌</span>Feedback</a>
+            <a class="nav-link" href="#navigation"><span class="nav-icon">↳</span>Navigation</a>
+            <a class="nav-link" href="#data"><span class="nav-icon">▦</span>Data display</a>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Product</div>
+            <a class="nav-link" href="#dashboard"><span class="nav-icon">↗</span>Dashboard</a>
+            <a class="nav-link" href="#pos"><span class="nav-icon">◫</span>POS</a>
+            <a class="nav-link" href="#handoff"><span class="nav-icon">◇</span>Team handoff</a>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="breadcrumb">Design System / Coffee Shop Admin / Premium SaaS</div>
+          <div class="top-actions">
+            <button class="btn ghost icon" aria-label="Notifications">◐</button>
+            <button class="btn ghost">Export spec</button>
+            <button class="btn secondary">Open dashboard</button>
+          </div>
+        </header>
+
+        <div class="page">
+          <section class="hero" id="overview">
+            <div>
+              <p class="eyebrow">Premium coffee operations</p>
+              <h1 class="display">A calm design system for specialty coffee teams.</h1>
+              <p class="lead">This single HTML file documents the visual language, tokens, component states, reusable patterns, and admin screens needed for a modern coffee shop management platform.</p>
+            </div>
+            <div class="dialog">
+              <span class="badge accent">System principle</span>
+              <h2 class="section-title" style="font-size:22px;margin-top:16px">Quiet controls, clear hierarchy.</h2>
+              <p class="section-copy">Use warm surfaces, restrained accents, soft borders, and direct content. Avoid decoration that does not support operations.</p>
+            </div>
+          </section>
+
+          <section class="section" id="tokens">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title">Design Tokens</h2>
+                <p class="section-copy">Figma-friendly naming that maps directly to CSS variables.</p>
+              </div>
+              <span class="chip">8-point spacing</span>
+            </div>
+            <div class="grid cols-4">
+              <article class="card token-card"><div class="swatch" style="background:#dbcdd6"></div><strong>Color / Background / Primary</strong><p class="small muted">--color-bg / #DBCDC6</p></article>
+              <article class="card token-card"><div class="swatch" style="background:#ead7d1"></div><strong>Color / Surface / Base</strong><p class="small muted">--color-surface / #EAD7D1</p></article>
+              <article class="card token-card"><div class="swatch" style="background:#dd99bb"></div><strong>Color / Accent / Primary</strong><p class="small muted">--color-accent / #DD99BB</p></article>
+              <article class="card token-card"><div class="swatch" style="background:#7b506f"></div><strong>Color / Accent / Secondary</strong><p class="small muted">--color-secondary / #7B506F</p></article>
+              <article class="card token-card"><div class="swatch" style="background:#4d8c57"></div><strong>Color / Semantic / Success</strong><p class="small muted">Positive state</p></article>
+              <article class="card token-card"><div class="swatch" style="background:#d99b3d"></div><strong>Color / Semantic / Warning</strong><p class="small muted">Needs attention</p></article>
+              <article class="card token-card"><div class="swatch" style="background:#c25a5a"></div><strong>Color / Semantic / Danger</strong><p class="small muted">Destructive state</p></article>
+              <article class="card token-card"><div class="swatch" style="background:rgba(31,26,56,.08)"></div><strong>Color / Border / Subtle</strong><p class="small muted">rgba(31,26,56,.08)</p></article>
+            </div>
+            <pre class="code" style="margin-top:16px">Naming: Foundation/Color/Background/Primary, Foundation/Radius/Medium, Component/Button/Primary, Pattern/Dashboard/KPI Card
+CSS: --space-1 4px, --space-2 8px, --space-3 12px, --space-4 16px, --space-6 24px, --space-8 32px, --space-12 48px, --space-16 64px</pre>
+          </section>
+
+          <section class="section" id="typography">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title">Typography</h2>
+                <p class="section-copy">Inter only. Use size to communicate workflow priority, not ornament.</p>
+              </div>
+            </div>
+            <div class="grid cols-2">
+              <article class="card pad stack">
+                <p class="display">Display</p>
+                <h1 style="margin:0;font-size:32px">Heading XL</h1>
+                <h2 style="margin:0;font-size:26px">Heading L</h2>
+                <h3 style="margin:0;font-size:22px">Heading M</h3>
+                <strong style="font-size:18px">Heading S</strong>
+              </article>
+              <article class="card pad stack">
+                <p class="body-lg">Body Large is used for page introductions and important helper copy.</p>
+                <p class="body">Body is used for dense dashboard information, form labels, tables, and descriptions.</p>
+                <p class="small muted">Caption is for metadata, badges, timestamps, and column hints.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" id="buttons">
+            <div class="section-head">
+              <div><h2 class="section-title">Buttons</h2><p class="section-copy">Variants cover hierarchy, risk, utility, loading, disabled, icon, and floating actions.</p></div>
+            </div>
+            <article class="card pad">
+              <div class="cluster">
+                <button class="btn">Primary</button>
+                <button class="btn secondary">Secondary</button>
+                <button class="btn ghost">Ghost</button>
+                <button class="btn outline">Outline</button>
+                <button class="btn danger">Danger</button>
+                <button class="btn"><span class="spinner"></span>Loading</button>
+                <button class="btn" disabled>Disabled</button>
+                <button class="btn icon" aria-label="Icon button">＋</button>
+                <button class="btn fab" aria-label="Floating action">＋</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="section" id="inputs">
+            <div class="section-head">
+              <div><h2 class="section-title">Inputs</h2><p class="section-copy">Controls are compact, accessible, and optimized for admin workflows.</p></div>
+            </div>
+            <div class="grid cols-3">
+              <article class="card pad stack">
+                <label>Text input<input class="field" placeholder="Single origin espresso" /></label>
+                <label>Search input<span class="search"><span class="search-icon">⌕</span><input class="field" placeholder="Search customers" /></span></label>
+                <label>Textarea<textarea placeholder="Recipe notes"></textarea></label>
+              </article>
+              <article class="card pad stack">
+                <label>Dropdown<select><option>All branches</option><option>Siam</option><option>Ari</option></select></label>
+                <label>Date picker<input class="field" type="date" /></label>
+                <label>Time picker<input class="field" type="time" /></label>
+              </article>
+              <article class="card pad stack">
+                <label>Autocomplete<input class="field" list="ingredients" placeholder="Oat milk" /><datalist id="ingredients"><option>Oat milk</option><option>Espresso blend</option><option>Vanilla syrup</option></datalist></label>
+                <div class="tag-input"><span class="chip">Retail</span><span class="chip">Seasonal</span><input style="border:0;background:transparent;outline:0;min-width:120px" placeholder="Add tag" /></div>
+                <div class="otp"><input class="field" value="2" /><input class="field" value="8" /><input class="field" value="4" /><input class="field" value="1" /><input class="field" /><input class="field" /></div>
+                <label class="checkline"><input type="checkbox" checked /> Track inventory</label>
+                <label class="checkline"><input type="radio" checked /> Dine-in default</label>
+                <label class="checkline"><input class="toggle" type="checkbox" checked /> Member pricing</label>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" id="feedback">
+            <div class="section-head">
+              <div><h2 class="section-title">Feedback</h2><p class="section-copy">Use feedback sparingly and make status clear without loud colors.</p></div>
+            </div>
+            <div class="grid cols-3">
+              <article class="card pad stack">
+                <div class="toast"><strong>Toast</strong><p class="section-copy">Order #1091 has moved to kitchen display.</p></div>
+                <div class="alert"><strong>Alert</strong><p class="section-copy">Oat milk is below par level for the afternoon rush.</p></div>
+                <div class="tooltip">Tooltip: Sync with supplier</div>
+              </article>
+              <article class="card pad stack">
+                <div class="dialog"><span class="badge danger">Confirmation</span><h3 class="card-title" style="margin-top:12px">Void this order?</h3><p class="section-copy">This action will be recorded in audit logs.</p><div class="cluster"><button class="btn danger">Void order</button><button class="btn ghost">Cancel</button></div></div>
+              </article>
+              <article class="card pad stack">
+                <span class="chip success">Paid</span><span class="chip warning">Preparing</span><span class="chip danger">Low stock</span>
+                <div class="progress"><span style="width:68%"></span></div>
+                <div class="skeleton" style="width:92%"></div><div class="skeleton" style="width:70%"></div><div class="empty-state card"><div><strong>Empty state</strong><p class="section-copy">No purchase orders awaiting approval.</p></div></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" id="navigation">
+            <div class="section-head">
+              <div><h2 class="section-title">Navigation</h2><p class="section-copy">Patterns for sidebar, topbar, breadcrumbs, tabs, pagination, drawers, sheets, and menus.</p></div>
+            </div>
+            <div class="grid cols-3">
+              <article class="card pad stack">
+                <div class="breadcrumb">Inventory / Ingredients / Oat milk</div>
+                <div class="tabs"><button class="tab is-active">Overview</button><button class="tab">Movements</button><button class="tab">Suppliers</button></div>
+                <div class="pagination"><button class="btn ghost icon">‹</button><span class="chip">1 / 8</span><button class="btn ghost icon">›</button></div>
+              </article>
+              <article class="card drawer"><h3 class="card-title">Drawer</h3><p class="section-copy">Use for order details, stock edits, member profiles, and audit log metadata.</p></article>
+              <article class="stack">
+                <div class="context-menu"><div class="menu-item">Edit product</div><div class="menu-item">Duplicate recipe</div><div class="menu-item">Archive</div></div>
+                <div class="bottom-sheet"><strong>Bottom sheet</strong><p class="section-copy">Mobile payment methods and quick modifiers.</p></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" id="data">
+            <div class="section-head">
+              <div><h2 class="section-title">Data Display</h2><p class="section-copy">Reusable cards, analytics blocks, tables, timelines, avatars, calendars, and statistics.</p></div>
+              <button class="btn ghost">Export CSV</button>
+            </div>
+            <div class="grid cols-4">
+              <article class="card pad"><span class="chip success">+12.8%</span><div class="kpi-value">$8,420</div><p class="section-copy">Today's revenue</p></article>
+              <article class="card pad"><span class="chip">286</span><div class="kpi-value">Orders</div><p class="section-copy">Across 3 branches</p></article>
+              <article class="card pad"><span class="chip warning">6 low</span><div class="kpi-value">18h</div><p class="section-copy">Inventory coverage</p></article>
+              <article class="card pad"><span class="chip success">92%</span><div class="kpi-value">4.8</div><p class="section-copy">Member rating</p></article>
+            </div>
+            <article class="card table-wrap" style="margin-top:16px">
+              <table>
+                <thead><tr><th>Ingredient</th><th>Category</th><th>Supplier</th><th>Status</th><th>Par</th><th>On hand</th></tr></thead>
+                <tbody>
+                  <tr><td>Oat milk</td><td>Dairy alternative</td><td>Minor Figures</td><td><span class="chip danger">Low</span></td><td>24 cartons</td><td>8 cartons</td></tr>
+                  <tr><td>Espresso blend</td><td>Coffee</td><td>House roastery</td><td><span class="chip success">Healthy</span></td><td>18 kg</td><td>26 kg</td></tr>
+                  <tr><td>Vanilla syrup</td><td>Modifier</td><td>Monin</td><td><span class="chip warning">Watch</span></td><td>12 bottles</td><td>5 bottles</td></tr>
+                </tbody>
+              </table>
+            </article>
+          </section>
+
+          <section class="section" id="dashboard">
+            <div class="section-head">
+              <div><h2 class="section-title">Admin Dashboard Pattern</h2><p class="section-copy">A complete operations view using the same tokens and components.</p></div>
+            </div>
+            <div class="grid dashboard-grid">
+              <article class="card">
+                <div class="card-head"><h3 class="card-title">Sales chart</h3><span class="chip">Hourly</span></div>
+                <div class="chart"><div class="bar" style="height:42%"></div><div class="bar" style="height:66%"></div><div class="bar" style="height:54%"></div><div class="bar" style="height:82%"></div><div class="bar" style="height:74%"></div><div class="bar" style="height:94%"></div><div class="bar" style="height:61%"></div></div>
+              </article>
+              <aside class="card pad stack">
+                <div class="row"><div class="media"><div class="avatar">OL</div><div><strong>Oat Latte</strong><span>68 sold today</span></div></div><strong>$408</strong></div>
+                <div class="row"><div class="media"><div class="avatar">EB</div><div><strong>Espresso Blend</strong><span>51 sold today</span></div></div><strong>$306</strong></div>
+                <div class="row"><div><strong>Kitchen queue</strong><p class="section-copy">11 active tickets, average 3m 12s.</p></div><span class="chip warning">Busy</span></div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="section" id="pos">
+            <div class="section-head">
+              <div><h2 class="section-title">POS Tablet Pattern</h2><p class="section-copy">Large product grid, category filters, search, cart, payment methods, discounts, and receipt preview.</p></div>
+            </div>
+            <div class="grid pos-grid">
+              <article class="card pad stack">
+                <div class="cluster"><button class="btn secondary">Coffee</button><button class="btn ghost">Tea</button><button class="btn ghost">Pastry</button><button class="btn ghost">Retail</button></div>
+                <div class="search"><span class="search-icon">⌕</span><input class="field" placeholder="Search menu" /></div>
+                <div class="grid product-grid">
+                  <div class="card product-card"><div class="product-thumb">FW</div><div><strong>Flat White</strong><p class="section-copy">$5.50</p></div></div>
+                  <div class="card product-card"><div class="product-thumb">CB</div><div><strong>Cold Brew</strong><p class="section-copy">$6.00</p></div></div>
+                  <div class="card product-card"><div class="product-thumb">YT</div><div><strong>Yuzu Tonic</strong><p class="section-copy">$7.20</p></div></div>
+                  <div class="card product-card"><div class="product-thumb">CN</div><div><strong>Canele</strong><p class="section-copy">$4.80</p></div></div>
+                  <div class="card product-card"><div class="product-thumb">FS</div><div><strong>Filter Set</strong><p class="section-copy">$12.00</p></div></div>
+                  <div class="card product-card"><div class="product-thumb">RB</div><div><strong>Retail Beans</strong><p class="section-copy">$22.00</p></div></div>
+                </div>
+              </article>
+              <aside class="card pad stack">
+                <h3 class="card-title">Order summary</h3>
+                <div class="row"><span>Oat Latte x 2</span><strong>$12</strong></div>
+                <div class="row"><span>Canele x 1</span><strong>$5</strong></div>
+                <div class="row"><span>Member discount</span><strong>-$2</strong></div>
+                <div class="row" style="font-size:24px;font-weight:800"><span>Total</span><span>$15</span></div>
+                <div class="grid cols-2"><button class="btn ghost">Cash</button><button class="btn ghost">QR</button><button class="btn ghost">Card</button><button class="btn ghost">Split</button></div>
+                <button class="btn secondary">Charge</button>
+              </aside>
+            </div>
+          </section>
+
+          <section class="section" id="handoff">
+            <div class="section-head">
+              <div><h2 class="section-title">Team Handoff</h2><p class="section-copy">Shared rules make this easier for designers and engineers to extend without breaking consistency.</p></div>
+            </div>
+            <div class="grid cols-3">
+              <article class="card pad stack"><span class="badge accent">Atomic naming</span><strong>Foundation → Component → Pattern → Screen</strong><p class="section-copy">Example: Component/Button/Primary and Pattern/POS/Product Card.</p></article>
+              <article class="card pad stack"><span class="badge accent">Component rules</span><strong>One component, explicit variants.</strong><p class="section-copy">Avoid duplicate card, badge, button, and table styles. Extend with modifier classes.</p></article>
+              <article class="card pad stack"><span class="badge accent">Accessibility</span><strong>Use semantic HTML first.</strong><p class="section-copy">Buttons are buttons, tables are tables, focus states are visible, and labels are attached to inputs.</p></article>
+            </div>
+            <pre class="code" style="margin-top:16px">Suggested files when this becomes an app:
+/tokens/colors.css
+/tokens/spacing.css
+/components/button.html
+/components/input.html
+/patterns/admin-shell.html
+/patterns/pos-screen.html
+/screens/dashboard.html</pre>
+          </section>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
